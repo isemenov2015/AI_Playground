@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Prompt Playground</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+</head>
+<body>
+    <textarea id="system-prompt" placeholder="System Prompt"></textarea>
+    <textarea id="user-prompt" placeholder="User Prompt"></textarea>
+    <div id="chat-window"></div>
+    <input type="text" id="user-message" placeholder="Type your message">
+    <button onclick="sendMessage()">Send</button>
+    <button onclick="saveDialog()">Save Dialog</button>
+
+    <script>
+        function sendMessage() {
+            const systemPrompt = $('#system-prompt').val();
+            const userPrompt = $('#user-prompt').val();
+            const userMessage = $('#user-message').val();
+
+            $.ajax({
+                url: '/chat',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    system_prompt: systemPrompt,
+                    user_prompt: userPrompt,
+                    user_message: userMessage
+                }),
+                success: function(response) {
+                    $('#chat-window').append('<div class="user-message">' + userMessage + '</div>');
+                    $('#chat-window').append('<div class="bot-response">' + response.response + '</div>');
+                    $('#user-message').val('');
+                    // Update user prompt with new message
+                    $('#user-prompt').val(userPrompt + '\nUser: ' + userMessage);
+                }
+            });
+        }
+
+        function saveDialog() {
+            // Implement logic to save dialog to a file
+            console.log("Saving dialog...")
+        }
+    </script>
+</body>
+</html>
