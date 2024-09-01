@@ -2,22 +2,61 @@
 <html>
 <head>
     <title>Prompt Playground</title>
+    <link rel="stylesheet" type="text/css" href="https://bootswatch.com/5/lux/bootstrap.min.css">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
 </head>
-<body>
-    <textarea id="system-prompt" placeholder="System Prompt"></textarea>
-    <textarea id="user-prompt" placeholder="User Prompt"></textarea>
-    <div id="chat-window"></div>
-    <input type="text" id="user-message" placeholder="Type your message">
-    <button onclick="sendMessage()">Send</button>
-    <button onclick="saveDialog()">Save Dialog</button>
+<body class="container">
+
+    <br>
+
+    <div class="row">
+        <div class="col-md-4">
+            <textarea id="system-prompt" class="form-control mb-3" style="height: 200px; width: 420px;" placeholder="System Prompt">{{ system_prompt_content }}</textarea>
+            <textarea id="user-prompt" class="overflow-auto border rounded mb-3" style="height: 200px; width: 420px;" placeholder="Last LLM output"></textarea>
+        </div>
+        <div class="col-md-8">
+            <div id="chat-window" class="h-100 overflow-auto border rounded p-3"></div>
+            <br>
+            <div class="row">
+                <div class="col-md-6">
+                    <textarea id="user-message" class="form-control mb-3" placeholder="User message"></textarea>
+                </div>
+                <div class="col-md-3">
+                    <select id="llm-version" class="form-select">
+                        <option value="gpt-3.5-turbo">gpt-3.5-turbo</option>
+                        <option value="gpt-4o-mini">gpt-4o-mini</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <input type="number" id="llm-temperature" class="form-control mb-2" min="0" max="100" step="1" value="30" placeholder="Temperature">
+                </div>
+                <div class="col-md-3">
+                    <button onclick="sendMessage()" class="btn btn-primary mt-2">Send</button>
+                    <button onclick="saveDialog()" class="btn btn-primary mt-2">Save Dialog</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script>
+        $(document).ready(function() {
+            // Load system prompt from prompt_system.txt
+            const promptSystemPath = 'prompt_system.txt';
+            $.ajax({
+                url: promptSystemPath,
+                type: 'GET',
+                success: function(data) {
+                    $('#system-prompt').val(data);
+                }
+            });
+        });
+
         function sendMessage() {
             const systemPrompt = $('#system-prompt').val();
             const userPrompt = $('#user-prompt').val();
             const userMessage = $('#user-message').val();
-
+            const llmVersion = $('#llm-version').val();
+            const llmTemperature = parseInteger($('#llm-temperature').val());
             $.ajax({
                 url: '/chat',
                 type: 'POST',
@@ -25,21 +64,50 @@
                 data: JSON.stringify({
                     system_prompt: systemPrompt,
                     user_prompt: userPrompt,
-                    user_message: userMessage
+                    user_message: userMessage,
+                    llm_version: llmVersion,
+                    llm_temperature: llmTemperature
                 }),
                 success: function(response) {
-                    $('#chat-window').append('<div class="user-message">' + userMessage + '</div>');
+                    $('#chat-window').append('<div class="user-message">' + 'User: ' + userMessage + '</div>');
                     $('#chat-window').append('<div class="bot-response">' + response.response + '</div>');
                     $('#user-message').val('');
-                    // Update user prompt with new message
-                    $('#user-prompt').val(userPrompt + '\nUser: ' + userMessage);
+                    // Update last LLM output with new message
+                    $('#user-prompt').val('User: ' + userMessage + '\n' + response.response);
                 }
             });
         }
 
         function saveDialog() {
-            // Implement logic to save dialog to a file
-            console.log("Saving dialog...")
+            const chatHistory = $('#chat-window').children().map(function() {
+                return $(this).text();
+            }).get();
+
+            const dialog = {
+                system_prompt: $('#system-prompt').val(),
+                user_prompt: $('#user-prompt').val(),
+                chat_history: chatHistory
+            };
+
+            $.ajax({
+                url: '/save',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(dialog),
+                success: function(response) {
+                    console.log('Dialog saved successfully!');
+                }
+            });
+        }
+
+        function parseInteger(value) {
+            // Function to handle potential parsing errors
+            try {
+                return parseInt(value);
+            } catch (error) {
+                console.error("Error parsing temperature:", error);
+                return 0; // Or set a default value in case of parsing error
+            }
         }
     </script>
 </body>
