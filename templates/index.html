@@ -33,6 +33,7 @@
                 <div class="col-md-3">
                     <button onclick="sendMessage()" class="btn btn-primary mt-2">Send</button>
                     <button onclick="saveDialog()" class="btn btn-primary mt-2">Save Dialog</button>
+                    <a id="download-link" style="display: none;"></a> <!-- Hidden link for file download -->
                 </div>
             </div>
         </div>
@@ -70,34 +71,33 @@
                 }),
                 success: function(response) {
                     $('#chat-window').append('<div class="user-message">' + 'User: ' + userMessage + '</div>');
-                    $('#chat-window').append('<div class="bot-response">' + response.response + '</div>');
+//                    $('#chat-window').append('<div class="bot-response">' + response.response + '</div>');
+                    $('#chat-window').append('<div class="bot-response">' + llmVersion + ': ' + response.text + '</div>');
                     $('#user-message').val('');
                     // Update last LLM output with new message
-                    $('#user-prompt').val('User: ' + userMessage + '\n' + response.response);
+                    $('#user-prompt').val('User: ' + userMessage + '\n' + llmVersion + ': ' + JSON.stringify(response));
                 }
             });
         }
 
         function saveDialog() {
+            // Extract only the chat history text from the chat window
             const chatHistory = $('#chat-window').children().map(function() {
                 return $(this).text();
-            }).get();
-
-            const dialog = {
-                system_prompt: $('#system-prompt').val(),
-                user_prompt: $('#user-prompt').val(),
-                chat_history: chatHistory
-            };
-
-            $.ajax({
-                url: '/save',
-                type: 'POST',
-                contentType: 'application/json',
-                data: JSON.stringify(dialog),
-                success: function(response) {
-                    console.log('Dialog saved successfully!');
-                }
-            });
+            }).get().join("\n");  // Join the messages into a single string
+    
+            // Create a Blob from the chat history
+            const blob = new Blob([chatHistory], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+    
+            // Trigger download using a hidden anchor element
+            const link = document.getElementById('download-link');
+            link.href = url;
+            link.download = 'chat_history.txt';  // Set the default filename
+            link.click();
+    
+            // Revoke the object URL after download
+            URL.revokeObjectURL(url);
         }
 
         function parseInteger(value) {

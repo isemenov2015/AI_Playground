@@ -33,18 +33,18 @@ def generate_response(system_prompt="You are an AI assistant of general purpose"
         prompt_template = ChatPromptTemplate.from_messages(
             [
                 SystemMessage(content=system_prompt),
-                HumanMessage(content="{input}")
+                HumanMessage(content=user_prompt)
             ]
         )
-
         # Use the prompt template to create a formatted prompt
-        formatted_prompt = prompt_template.format(input=user_prompt)
+        formatted_prompt = prompt_template.format()
 
         # Generate a response using the formatted prompt
         response = llm.generate([formatted_prompt])
+        llm_text_response = response.generations[0][0].text
 
         # Extract the generated response text from the LLM output
-        generated_response = llm_version + ": " + (response.generations[0].text if response.generations else "Bad LLM response")
+        generated_response = llm_text_response if response.generations else "Bad LLM response"#
 
         return generated_response
 
@@ -66,7 +66,6 @@ def index():
 
 @app.route('/chat', methods=['POST'])
 def chat():
-    print(request.json)
     system_prompt = request.json['system_prompt']
     user_prompt = request.json['user_prompt']
     user_message = request.json['user_message']
@@ -77,8 +76,9 @@ def chat():
     user_prompt += f"\nUser: {user_message}"
 
     response = generate_response(system_prompt, user_prompt, llm_version, llm_temperature)
+    response = json.loads(response)
 
-    return jsonify({'response': response})
+    return jsonify({'text': response['text'], 'is_last_message': response['is_last_message']})
 
 @app.route('/save', methods=['POST'])
 def save_dialog():
