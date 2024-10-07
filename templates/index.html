@@ -31,10 +31,16 @@
                     <input type="number" id="llm-temperature" class="form-control mb-2" min="0" max="100" step="1" value="30" placeholder="Temperature">
                 </div>
                 <div class="col-md-3">
-                    <button onclick="sendMessage()" class="btn btn-primary mt-2">Send</button>
-                    <button onclick="saveDialog()" class="btn btn-primary mt-2">Save Dialog</button>
-                    <a id="download-link" style="display: none;"></a> <!-- Hidden link for file download -->
+                    <select id="history-type" class="form-select">
+                        <option value="full">Full history</option>
+                        <option value="summary">Summary</option>
+                    </select>
                 </div>
+            </div>
+            <div class="col-md-3">
+                <button onclick="sendMessage()" class="btn btn-primary mt-2">Send</button>
+                <button onclick="saveDialog()" class="btn btn-primary mt-2">Save Dialog</button>
+                <a id="download-link" style="display: none;"></a> <!-- Hidden link for file download -->
             </div>
         </div>
     </div>
@@ -58,6 +64,13 @@
             const userMessage = $('#user-message').val();
             const llmVersion = $('#llm-version').val();
             const llmTemperature = parseInteger($('#llm-temperature').val());
+             // Get the history type selection
+            const historyType = $('#history-type').val();
+             // Collect chat history from the chat-window div
+            const chatHistory = $('#chat-window').children().map(function() {
+                return $(this).text();
+            }).get();            
+            
             $.ajax({
                 url: '/chat',
                 type: 'POST',
@@ -67,7 +80,9 @@
                     user_prompt: userPrompt,
                     user_message: userMessage,
                     llm_version: llmVersion,
-                    llm_temperature: llmTemperature
+                    llm_temperature: llmTemperature,
+                    history_type: historyType, // Pass the selected history type
+                    chat_history: chatHistory
                 }),
                 success: function(response) {
                     $('#chat-window').append('<div class="user-message">' + 'User: ' + userMessage + '</div>');
