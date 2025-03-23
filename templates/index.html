@@ -23,7 +23,8 @@
                 </div>
                 <div class="col-md-3">
                     <select id="llm-version" class="form-select">
-                        <option value="gpt-3.5-turbo">gpt-3.5-turbo</option>
+                        <option value="o1">gpt-o1 (reasoning)</option>
+                        <option value="o3-mini">gpt-o3-mini (reasoning)</option>
                         <option value="gpt-4o-mini">gpt-4o-mini</option>
                     </select>
                 </div>
@@ -64,33 +65,38 @@
             const userMessage = $('#user-message').val();
             const llmVersion = $('#llm-version').val();
             const llmTemperature = parseInteger($('#llm-temperature').val());
-             // Get the history type selection
             const historyType = $('#history-type').val();
-             // Collect chat history from the chat-window div
-            const chatHistory = $('#chat-window').children().map(function() {
-                return $(this).text();
-            }).get();            
-            
+        
+            // Collect chat history from the chat window, keeping roles
+            let chatHistory = [];
+            $('#chat-window').children().each(function() {
+                const text = $(this).text();
+                if (text.startsWith("User: ")) {
+                    chatHistory.push({ role: "user", content: text.replace("User: ", "") });
+                } else if (text.startsWith("Assistant: ")) {
+                    chatHistory.push({ role: "assistant", content: text.replace("Assistant: ", "") });
+                }
+            });
+        
             $.ajax({
                 url: '/chat',
                 type: 'POST',
                 contentType: 'application/json',
                 data: JSON.stringify({
                     system_prompt: systemPrompt,
-                    user_prompt: userPrompt,
-                    user_message: userMessage,
+                    user_prompt: userPrompt,  // Keep user-prompt unchanged
+                    user_message: userMessage,  // Only send user-message to LLM
                     llm_version: llmVersion,
                     llm_temperature: llmTemperature,
-                    history_type: historyType, // Pass the selected history type
-                    chat_history: chatHistory
+                    history_type: historyType,
+                    chat_history: chatHistory // Send properly formatted history
                 }),
                 success: function(response) {
-                    $('#chat-window').append('<div class="user-message">' + 'User: ' + userMessage + '</div>');
-//                    $('#chat-window').append('<div class="bot-response">' + response.response + '</div>');
-                    $('#chat-window').append('<div class="bot-response">' + llmVersion + ': ' + response.text + '</div>');
+                    console.log(response);
+                    $('#chat-window').append('<div class="user-message">User: ' + userMessage + '</div>');
+                    $('#chat-window').append('<div class="bot-response">Assistant: ' + response.text + '</div>');
                     $('#user-message').val('');
-                    // Update last LLM output with new message
-                    $('#user-prompt').val('User: ' + userMessage + '\n' + llmVersion + ': ' + JSON.stringify(response));
+                    $('#user-prompt').val(JSON.stringify(response, null, 2));
                 }
             });
         }

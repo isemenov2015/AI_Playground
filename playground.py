@@ -1,11 +1,8 @@
 import os
-import json
+import json, ast
 
 from flask import Flask, render_template, request, jsonify
-from langchain_openai import ChatOpenAI
-from langchain_core.messages import HumanMessage, SystemMessage
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.prompts import MessagesPlaceholder
+from openai import OpenAI
 
 from dotenv import load_dotenv
 
@@ -19,37 +16,44 @@ openai_api_key = os.environ.get("OPENAI_API_KEY")
 
 def generate_response(system_prompt="You are an AI assistant of general purpose", 
                       user_prompt="Greet me, please!", 
-                      chat_history="",
-                      llm_version="gpt-3.5-turbo", 
+                      chat_history=[],
+                      llm_version="gpt-4o-mini", 
                       llm_temperature=30):
     try:
-        # Initialize the LLM with the given parameters
-        llm = ChatOpenAI(
-            model=llm_version,
-            temperature=1.0 * llm_temperature / 100,  # Pass the temperature value
-            max_tokens=None,
-            timeout=None,
-            max_retries=2,
-            api_key=openai_api_key
-        )
+        client = OpenAI(api_key=openai_api_key)
 
-        # Create a ChatPromptTemplate object to format the prompt
-        formatted_prompt = f"""System: {system_prompt} \nChat history: {chat_history}\n Human: {user_prompt}"""
+        # Build the conversation history in the format expected by OpenAI
+        messages = [{"role": "system", "content": system_prompt}]
+        messages.extend(chat_history)  # Append full chat history
+        messages.append({"role": "user", "content": user_prompt})  # Add the latest user prompt
 
-#        print(formatted_prompt)
 
-        # Generate a response using the formatted prompt
-        response = llm.generate([formatted_prompt])
-        llm_text_response = response.generations[0][0].text
+        # print('MESSAGES: \n\n', messages)
 
-        # Extract the generated response text from the LLM output
-        generated_response = llm_text_response if response.generations else "Bad LLM response"#
+        if not llm_version in ["gpt-4o-mini", "gpt-3.5-turbo"]:
+            response = client.chat.completions.create(
+                model=llm_version,
+    #            temperature=1.0 * llm_temperature / 100,  # Scale to OpenAI's range
+                timeout=None,
+                messages=messages,
+                reasoning_effort="medium",
+            )
+            output = response.choices[0].message.content
+        else:
+            response = client.chat.completions.create(
+                model=llm_version,
+                temperature=1.0 * llm_temperature / 100,  # Scale to OpenAI's range
+                timeout=None,
+                messages=messages,
+            )
+            # print(f"RESPONSE: \n\n{response.choices[0].message.content}")
+            output = response.choices[0].message.content
 
-        return generated_response
+        return output  # Return response
 
     except Exception as e:
         print(f"An error occurred: {e}")
-        return f"{llm_version}: Bad LLM response: something went wrong"
+        return json.dumps({"error": "Bad LLM response: something went wrong"})  # Return JSON error
 
 
 @app.route('/')
