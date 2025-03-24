@@ -5,7 +5,13 @@ from flask import Flask, render_template, request, jsonify
 from openai import OpenAI
 
 from dotenv import load_dotenv
+from pydantic import BaseModel
 
+
+class LLMResponse(BaseModel):
+    text: str
+    chat_summary: str
+    is_last_message: bool
 
 app = Flask(__name__, static_folder='.')
 
@@ -17,7 +23,7 @@ openai_api_key = os.environ.get("OPENAI_API_KEY")
 def generate_response(system_prompt="You are an AI assistant of general purpose", 
                       user_prompt="Greet me, please!", 
                       chat_history=[],
-                      llm_version="gpt-4o-mini", 
+                      llm_version="o1",
                       llm_temperature=30):
     try:
         client = OpenAI(api_key=openai_api_key)
@@ -31,20 +37,22 @@ def generate_response(system_prompt="You are an AI assistant of general purpose"
         # print('MESSAGES: \n\n', messages)
 
         if not llm_version in ["gpt-4o-mini", "gpt-3.5-turbo"]:
-            response = client.chat.completions.create(
+            response = client.beta.chat.completions.parse(
                 model=llm_version,
     #            temperature=1.0 * llm_temperature / 100,  # Scale to OpenAI's range
                 timeout=None,
                 messages=messages,
-                reasoning_effort="medium",
+                reasoning_effort="high",
+                response_format=LLMResponse,
             )
             output = response.choices[0].message.content
         else:
-            response = client.chat.completions.create(
+            response = client.beta.chat.completions.parse(
                 model=llm_version,
                 temperature=1.0 * llm_temperature / 100,  # Scale to OpenAI's range
                 timeout=None,
                 messages=messages,
+                response_format=LLMResponse
             )
             # print(f"RESPONSE: \n\n{response.choices[0].message.content}")
             output = response.choices[0].message.content
