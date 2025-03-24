@@ -24,7 +24,8 @@ def generate_response(system_prompt="You are an AI assistant of general purpose"
                       user_prompt="Greet me, please!", 
                       chat_history=[],
                       llm_version="o1",
-                      llm_temperature=30):
+                      llm_temperature=30,
+                      reasoning_depth="medium"):
     try:
         client = OpenAI(api_key=openai_api_key)
 
@@ -42,7 +43,7 @@ def generate_response(system_prompt="You are an AI assistant of general purpose"
     #            temperature=1.0 * llm_temperature / 100,  # Scale to OpenAI's range
                 timeout=None,
                 messages=messages,
-                reasoning_effort="high",
+                reasoning_effort=reasoning_depth,
                 response_format=LLMResponse,
             )
             output = response.choices[0].message.content
@@ -84,12 +85,13 @@ def chat():
     llm_temperature = request.json['llm_temperature']
     chat_history = request.json['chat_history']
     history_type = request.json['history_type']
+    reasoning_depth = request.json['reasoning_depth']
 
     if history_type == "summary" and 'gpt-' in user_prompt:
         try:
             history = user_prompt.split(': ')[2]
             history = json.loads(history)
-            chat_history = history['summary']
+            chat_history = history['chat_summary']
         except:
             pass
 
@@ -98,7 +100,7 @@ def chat():
 
 #    print(f"Chat history_type: {history_type}\nChat history: {chat_history}")
 
-    response = generate_response(system_prompt, user_prompt, chat_history, llm_version, llm_temperature)
+    response = generate_response(system_prompt, user_prompt, chat_history, llm_version, llm_temperature, reasoning_depth)
 
 #    print(f"LLM response : {response}")
 

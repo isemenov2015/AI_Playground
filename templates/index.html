@@ -32,6 +32,13 @@
                     <input type="number" id="llm-temperature" class="form-control mb-2" min="0" max="100" step="1" value="30" placeholder="Temperature">
                 </div>
                 <div class="col-md-3">
+                    <select id="reasoning-depth" class="form-select">
+                        <option value="medium">Medium reasoning</option>
+                        <option value="high">High reasoning</option>
+                        <option value="low">Low reasoning</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
                     <select id="history-type" class="form-select">
                         <option value="full">Full history</option>
                         <option value="summary">Summary</option>
@@ -66,6 +73,7 @@
             const llmVersion = $('#llm-version').val();
             const llmTemperature = parseInteger($('#llm-temperature').val());
             const historyType = $('#history-type').val();
+            const reasoningDepth = $('#reasoning-depth').val();
         
             // Collect chat history from the chat window, keeping roles
             let chatHistory = [];
@@ -89,7 +97,8 @@
                     llm_version: llmVersion,
                     llm_temperature: llmTemperature,
                     history_type: historyType,
-                    chat_history: chatHistory // Send properly formatted history
+                    chat_history: chatHistory, // Send properly formatted history
+                    reasoning_depth: reasoningDepth
                 }),
                 success: function(response) {
                     console.log(response);
