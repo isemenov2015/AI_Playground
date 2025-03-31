@@ -37,7 +37,7 @@ def generate_response(system_prompt="You are an AI assistant of general purpose"
 
         # print('MESSAGES: \n\n', messages)
 
-        if not llm_version in ["gpt-4o-mini", "gpt-3.5-turbo"]:
+        if not llm_version in ["gpt-4o-mini", "gpt-3.5-turbo", "gpt-4o"]:
             response = client.beta.chat.completions.parse(
                 model=llm_version,
     #            temperature=1.0 * llm_temperature / 100,  # Scale to OpenAI's range
