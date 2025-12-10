@@ -1,0 +1,30 @@
+digraph Heliex_LoRA_Workflow {
+	rankdir=LR size=10
+	1 [label="Psychologist Registration
+Profile + Consent" fillcolor="#CFE2F3" fontname=Arial fontsize=11 shape=box style="filled,rounded"]
+	2 [label="Upload Example Dialogues
+(Anonymized Data)" fillcolor="#D9EAD3" fontname=Arial fontsize=11 shape=box style="filled,rounded"]
+	3 [label="Data Preprocessing
+(Clean + Split)" fillcolor="#FFF2CC" fontname=Arial fontsize=11 shape=box style="filled,rounded"]
+	4 [label="LoRA Training Pipeline
+(Parameter-Efficient Fine-Tuning)" fillcolor="#F9CB9C" fontname=Arial fontsize=11 shape=box style="filled,rounded"]
+	5 [label="Validation & Safety QA
+(Clinician + Automated)" fillcolor="#F4CCCC" fontname=Arial fontsize=11 shape=box style="filled,rounded"]
+	6 [label="Store Adapter & Index
+(Persona KB)" fillcolor="#D9D2E9" fontname=Arial fontsize=11 shape=box style="filled,rounded"]
+	7 [label="Persona Activation
+(Available in App)" fillcolor="#C9DAF8" fontname=Arial fontsize=11 shape=box style="filled,rounded"]
+	8 [label="Client Inference
+(LoRA Adapter Loaded)" fillcolor="#E6E6E6" fontname=Arial fontsize=11 shape=box style="filled,rounded"]
+	9 [label="Monitoring & Feedback
+(Retrain if needed)" fillcolor="#E2F0D9" fontname=Arial fontsize=11 shape=box style="filled,rounded"]
+	1 -> 2
+	2 -> 3
+	3 -> 4
+	4 -> 5
+	5 -> 6
+	6 -> 7
+	7 -> 8
+	8 -> 9
+	9 -> 3 [label="Retrain Loop" style=dashed]
+}

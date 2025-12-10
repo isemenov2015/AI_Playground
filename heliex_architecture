@@ -1,0 +1,28 @@
+digraph Heliex_System_Architecture {
+	rankdir=TB size=8
+	client [label="Client App
+(Web/Mobile Chat)" fillcolor="#E6F2FF" shape=box style="filled,rounded"]
+	gateway [label="API Gateway / Proxy
+(Routes Requests, Auth, Rate Limits)" fillcolor="#F2F2F2" shape=box style="filled,rounded"]
+	orchestrator [label="Persona & Safety Orchestration Layer
+- Persona Selector (Prompt, RAG, LoRA)
+- Safety Guardrails
+- Dialogue Manager" fillcolor="#FFF2CC" shape=box style="filled,rounded"]
+	kb [label="Persona Knowledge Base
+- Summary Prompts
+- Example Dialogues (RAG)
+- LoRA Adapter" fillcolor="#E2F0D9" shape=box style="filled,rounded"]
+	llm [label="Core LLM Backend
+- Frozen Base Model
+- Inject LoRA Adapter" fillcolor="#D9E1F2" shape=box style="filled,rounded"]
+	post [label="Response Post-Processor
+- Final Safety Filters
+- Compliance Logging" fillcolor="#FCE4D6" shape=box style="filled,rounded"]
+	client -> gateway
+	gateway -> orchestrator
+	orchestrator -> kb
+	orchestrator -> llm
+	kb -> llm
+	llm -> post
+	post -> client
+}
